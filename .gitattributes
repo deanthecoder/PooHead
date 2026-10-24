@@ -1,0 +1,2 @@
+# Preserve the DOS source's original CRLF bytes in Git.
+original/** -text whitespace=cr-at-eol

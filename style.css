@@ -1,0 +1,16 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #171923; color: #e6e8ef; }
+main { max-width: 1320px; padding: 24px 20px 40px; margin: auto; }
+header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+h1 { margin: 0; font-size: 24px; }
+header p { margin: 0 0 16px; color: #a8afc1; }
+.screen-wrap { width: 100%; background: #000; display: flex; justify-content: center; }
+canvas { width: min(100%, 1280px); aspect-ratio: 4 / 3; height: auto; image-rendering: pixelated; display: block; cursor: none; touch-action: manipulation; }
+.toolbar { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; padding: 15px 0; }
+button { background: #343c52; color: inherit; border: 1px solid #66718e; padding: 7px 14px; border-radius: 4px; cursor: pointer; }
+button:hover { background: #46516d; }
+label { white-space: nowrap; }
+#status { color: #c4cbdc; }
+.help { max-width: 900px; line-height: 1.55; color: #b9c1d1; }
+@media (max-width: 600px) { main { padding: 12px 8px 24px; } header { padding: 0 5px; } .help { padding: 0 5px; } }

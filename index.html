@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PooHead — a 1996 DOS card game, restored</title>
+  <meta name="description" content="Play PooHead, a browser recreation of Dean Edis's 1996 DOS card game.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>PooHead</h1>
+      <p>A 1996 DOS card game, restored from the original Pascal source</p>
+    </header>
+    <div class="screen-wrap"><canvas id="screen" width="320" height="200" aria-label="PooHead game screen" tabindex="0"></canvas></div>
+    <div class="toolbar">
+      <button id="new-game" type="button">New game</button>
+      <label><input id="crt-aspect" type="checkbox" checked> CRT aspect ratio</label>
+      <span id="status" role="status"></span>
+    </div>
+    <p class="help"><strong>Left click</strong> a card to play it. <strong>Right click</strong> cards of the same value to select several, then left click to play them. Click the pile to pick it up. Scroll arrows are at the sides of your hand; the tiny square in the upper left opens the card counts.</p>
+  </main>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
