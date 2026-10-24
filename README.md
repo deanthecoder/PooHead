@@ -4,6 +4,8 @@
 
 **[Play PooHead](https://deanthecoder.github.io/PooHead/)**
 
+![PooHead running in the browser, showing a dealt hand](img/gameplay.png)
+
 This is a preservation of a DOS card game I wrote in **August 1996**, with
 revisions visible in the surviving files through **February 1997**. The
 original was called *ShitHead*, after the traditional card game also known as
