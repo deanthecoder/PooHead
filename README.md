@@ -1,3 +1,5 @@
+[![Follow @deanthecoder](https://img.shields.io/twitter/url/https/twitter.com/deanthecoder.svg?style=social&label=Follow%20%40deanthecoder)](https://x.com/deanthecoder) [![GitHub stars](https://img.shields.io/github/stars/deanthecoder/PooHead?style=social&label=Star)](https://github.com/deanthecoder/PooHead/stargazers)
+
 # PooHead
 
 **[Play PooHead](https://deanthecoder.github.io/PooHead/)**
