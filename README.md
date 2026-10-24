@@ -39,7 +39,7 @@ screen.
 
 ## Run locally
 
-Run `sh run.sh`, then open <http://localhost:8765/>. This needs Python 3 only
+Run `sh run.sh`, then open the local URL it prints. This needs Python 3 only
 for a local static-file server; the game itself has no build step or external
 JavaScript dependencies. The same files are published by GitHub Pages.
 
