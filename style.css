@@ -6,7 +6,7 @@ header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
 h1 { margin: 0; font-size: 24px; }
 header p { margin: 0 0 16px; color: #a8afc1; }
 .screen-wrap { width: 100%; background: #000; display: flex; justify-content: center; }
-canvas { width: min(100%, 1280px); aspect-ratio: 4 / 3; height: auto; image-rendering: pixelated; display: block; cursor: none; touch-action: manipulation; }
+canvas { width: min(100%, 1280px); aspect-ratio: 4 / 3; height: auto; image-rendering: pixelated; display: block; cursor: none; touch-action: manipulation; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .toolbar { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; padding: 15px 0; }
 button { background: #343c52; color: inherit; border: 1px solid #66718e; padding: 7px 14px; border-radius: 4px; cursor: pointer; }
 button:hover { background: #46516d; }

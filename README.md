@@ -34,9 +34,10 @@ still holding cards loses.
   at the top of the pile does the same.
 - While the draw deck has cards, your hand refills to three after a valid play.
 
-**Controls:** Left click a card to play it. Right click cards of the same rank
-to select several, then left click one of them to play the selection. Left
-click the pile to pick it up. The arrows beside your hand scroll it. The tiny
+**Controls:** Tap or left click a card to play it. Hold a card for half a second
+or right click cards of the same rank to select several, then tap or left click
+one of them to play the selection. Tap or click the pile to pick it up. The
+arrows beside your hand scroll it. The tiny
 square at the upper-left of the game screen shows card counts. Use **New game**
 to redeal. You can switch between CRT and square-pixel aspect ratios below the
 screen.
@@ -46,6 +47,9 @@ screen.
 Run `sh run.sh`, then open the local URL it prints. This needs Python 3 only
 for a local static-file server; the game itself has no build step or external
 JavaScript dependencies. The same files are published by GitHub Pages.
+
+To run the input regression tests, use `node --test tests/input.test.cjs`
+with Node.js 18 or newer. Node.js is only needed for these tests.
 
 ## Original files
 

@@ -50,17 +50,61 @@ class Game {
         y: Math.max(0, Math.min(199, Math.floor((event.clientY - bounds.top) * 200 / bounds.height))),
       };
     };
-    canvas.addEventListener('pointermove', event => { updateMouse(event); this.draw(); });
+    let press = null;
+    const cancelPress = () => {
+      if (!press) return;
+      clearTimeout(press.timer);
+      const pointerId = press.pointerId;
+      press = null;
+      if (canvas.hasPointerCapture(pointerId)) canvas.releasePointerCapture(pointerId);
+    };
+    const performPress = (pending, button) => {
+      // A hold must not carry over into a new deal, turn, or dialog.
+      if (pending.generation !== this.generation || pending.phase !== this.phase || pending.modal !== this.modal) return;
+      updateMouse(pending.event);
+      this.click(button);
+    };
+    canvas.addEventListener('pointermove', event => {
+      if (press && event.pointerId !== press.pointerId) return;
+      if (press && Math.hypot(event.clientX - press.event.clientX, event.clientY - press.event.clientY) > 10) cancelPress();
+      updateMouse(event);
+      this.draw();
+    });
     canvas.addEventListener('pointerleave', () => { this.mouse = null; this.draw(); });
     canvas.addEventListener('pointerdown', event => {
       event.preventDefault();
+      if (!event.isPrimary) { cancelPress(); return; }
+      cancelPress();
       canvas.focus();
       updateMouse(event);
       if (this.phase === 'intro') { this.generation++; this.newGame(); return; }
-      this.click(event.button);
+      if (event.button !== 0) { this.click(event.button); return; }
+      press = {
+        pointerId: event.pointerId, event,
+        generation: this.generation, phase: this.phase, modal: this.modal,
+        held: false,
+      };
+      canvas.setPointerCapture(event.pointerId);
+      const pending = press;
+      press.timer = setTimeout(() => {
+        pending.held = true;
+        performPress(pending, 2);
+      }, 500);
+      this.draw();
     });
+    canvas.addEventListener('pointerup', event => {
+      if (!press || event.pointerId !== press.pointerId) return;
+      event.preventDefault();
+      const pending = press;
+      cancelPress();
+      if (!pending.held && Math.hypot(event.clientX - pending.event.clientX, event.clientY - pending.event.clientY) <= 10) performPress(pending, 0);
+    });
+    canvas.addEventListener('pointercancel', cancelPress);
+    canvas.addEventListener('lostpointercapture', cancelPress);
+    window.addEventListener('blur', cancelPress);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) cancelPress(); });
     canvas.addEventListener('contextmenu', event => event.preventDefault());
-    document.querySelector('#new-game').addEventListener('click', () => this.newGame());
+    document.querySelector('#new-game').addEventListener('click', () => { cancelPress(); this.newGame(); });
     document.querySelector('#crt-aspect').addEventListener('change', event => {
       fitScreen();
     });
