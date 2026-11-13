@@ -122,3 +122,16 @@ test('small finger movement still selects the original card', () => {
   hold(); canvas.emit('pointerup');
   assert.deepEqual([...game.selected], [7]);
 });
+
+test('touch holds ignore compatibility mouse/click events and never play on release', () => {
+  const { canvas, game, plays, hold } = setup();
+  canvas.emit('pointerdown', { pointerType: 'touch' });
+  canvas.emit('mousedown');
+  assert.equal(plays.length, 0);
+  hold();
+  canvas.emit('pointerup', { pointerType: 'touch' });
+  canvas.emit('mouseup');
+  canvas.emit('click');
+  assert.deepEqual([...game.selected], [7]);
+  assert.equal(plays.length, 0);
+});
