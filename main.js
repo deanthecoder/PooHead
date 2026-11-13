@@ -218,8 +218,9 @@ class Game {
       if (hand[i] && !hand[i + 3] && inside(cx, 20, cx + 44, 79)) return i;
     }
     if (inside(246, 23, 290, 82)) return 100;
-    if (this.leftCard > 7 && inside(3, 140, 12, 169)) return 101;
-    if (hand[this.leftCard + 5] && inside(306, 140, 315, 169)) return 102;
+    // Use the full gutters beside the hand so the small arrows are easy to tap.
+    if (this.leftCard > 7 && inside(0, 125, 29, 184)) return 101;
+    if (hand[this.leftCard + 5] && inside(291, 125, 319, 184)) return 102;
     if (inside(0, 0, 2, 2)) return 103;
     return 0;
   }

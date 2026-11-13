@@ -135,3 +135,31 @@ test('touch holds ignore compatibility mouse/click events and never play on rele
   assert.deepEqual([...game.selected], [7]);
   assert.equal(plays.length, 0);
 });
+
+test('the full left and right gutters scroll the hand on touch', () => {
+  const { canvas, game, plays } = setup();
+  game.players[1][12] = { value: 7 };
+  const tap = (clientX, clientY) => {
+    canvas.emit('pointerdown', { pointerType: 'touch', clientX, clientY });
+    canvas.emit('pointerup', { pointerType: 'touch', clientX, clientY });
+  };
+  for (const [rightX, leftX, y] of [[291, 29, 125], [319, 0, 184]]) {
+    tap(rightX, y);
+    assert.equal(game.leftCard, 8);
+    tap(leftX, y);
+    assert.equal(game.leftCard, 7);
+  }
+  assert.equal(plays.length, 0);
+});
+
+test('expanded arrow targets exclude cards and only work when scrolling is possible', () => {
+  const { game } = setup();
+  game.players[1][11] = { value: 7 };
+  assert.equal(game.cardAt(29, 140), 0); // Already at the left end.
+  assert.equal(game.cardAt(291, 140), 0); // No more cards on the right.
+  game.players[1][12] = { value: 8 };
+  assert.equal(game.cardAt(30, 140), 7);
+  assert.equal(game.cardAt(290, 140), 11);
+  assert.equal(game.cardAt(291, 124), 0);
+  assert.equal(game.cardAt(291, 185), 0);
+});
