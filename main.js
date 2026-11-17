@@ -18,7 +18,7 @@ class Game {
   }
 
   async init() {
-    await Promise.all(['BACKGRND.SPR', '4X5.FNT'].map(name => vga.load(name)));
+    await Promise.all(['BACKGRND.SPR', '4X5.FNT', 'LOGO.SPR', 'TITLE.SPR'].map(name => vga.load(name)));
     this.palette = vga.sprites['BACKGRND.SPR'].palette.slice();
     // ShadeBackground in GRAPHICS.PAS changes palette entries 216..255.
     for (let i = 0; i < 40; i++) {
@@ -445,9 +445,7 @@ class Game {
   }
   drawBoard() {
     vga.tile(vga.sprites['BACKGRND.SPR']);
-    vga.scaledText('POOHEAD', 10, 2, 2, 3);
-    vga.scaledText('POOHEAD', 9, 2, 2, 155);
-    vga.text('BY EDIS ENTERPRISES 96', 101, 5, 203);
+    vga.sprite(vga.sprites['LOGO.SPR'], 10, 2, true);
     // GLIB's Darken subtracts one palette index per pixel in these areas.
     for (const [x1, y1, x2, y2] of [[0, 191, 319, 197], [5, 17, 151, 98], [241, 17, 300, 98]]) {
       for (let y = y1; y <= y2; y++) for (let x = x1; x <= x2; x++) {
@@ -504,9 +502,8 @@ class Game {
     if (this.phase === 'intro') {
       vga.clear(0);
       for (let y = 0; y < 200; y++) vga.fill(0, y, 319, y, 216 + Math.floor(y / 5));
-      vga.scaledText('POOHEAD', 24, 77, 8, 3);
-      vga.scaledText('POOHEAD', 20, 73, 8, 113);
-      vga.scaledText('POOHEAD', 20, 72, 8, 185);
+      const title = vga.sprites['TITLE.SPR'];
+      vga.sprite(title, Math.floor((320 - title.width) / 2), Math.floor((200 - title.height) / 2), true);
       for (const [x, y, c] of [[91, 140, 72], [93, 140, 72], [91, 139, 72], [93, 141, 72], [92, 140, 180]])
         vga.text('written by edis enterprises', x, y, c);
     } else if (this.players) {
