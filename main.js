@@ -440,8 +440,14 @@ class Game {
     if (valid && !firstRow) {
       const minimum = cardNo >= 7 ? 7 : 4;
       const maximum = cardNo >= 7 ? 52 : 6;
-      for (let i = minimum; i <= maximum; i++)
-        if (i !== cardNo && hand[i]?.value === chosen.value) indices.push(i);
+      const special = chosen.number === '2' || chosen.number === '10';
+      const emptiesHand = hand.slice(minimum, maximum + 1)
+        .every(card => !card || card.value === chosen.value);
+      // Spend one escape card at a time unless the matching group empties this row.
+      if (!special || emptiesHand) {
+        for (let i = minimum; i <= maximum; i++)
+          if (i !== cardNo && hand[i]?.value === chosen.value) indices.push(i);
+      }
     }
     for (const index of indices.sort((a, b) => b - a)) {
       this.makeSpaceOnPile(hand[index]); this.removeCard(hand, index);

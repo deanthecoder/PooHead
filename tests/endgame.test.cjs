@@ -596,3 +596,49 @@ test('empty-pile face-down choices remain random instead of inspecting hidden ra
   assert.equal(messages[0].text, 'CPU 1 lays a ten.');
   assert.equal(game.players[2][2].number, '3');
 });
+
+test('CPUs spend only one two or ten while other ranks remain in the active row', async () => {
+  for (const number of ['2', '10']) {
+    for (const row of [4, 7]) {
+      const { game, messages } = setup();
+      game.players[2].fill(null);
+      game.players[2][row] = card(number);
+      game.players[2][row + 1] = { ...card(number), suit: 2 };
+      game.players[2][row + 2] = card('3');
+      game.pile[1] = card('K');
+      await game.cpuPlay(2, game.generation);
+      assert.equal(game.players[2].filter(c => c?.number === number).length, 1);
+      assert.equal(game.players[2].filter(c => c?.number === '3').length, 1);
+      assert.equal(messages[0].text, `CPU 1 lays a ${number === '2' ? 'two' : 'ten'}.`);
+    }
+  }
+});
+
+test('CPUs can lay matching specials together to empty the active row', async () => {
+  for (const number of ['2', '10']) {
+    for (const row of [4, 7]) {
+      const { game, messages } = setup();
+      game.players[2].fill(null);
+      game.players[2][1] = card('3');
+      if (row === 7) game.players[2][4] = card('4');
+      game.players[2][row] = card(number);
+      game.players[2][row + 1] = { ...card(number), suit: 2 };
+      game.pile[1] = card('K');
+      await game.cpuPlay(2, game.generation);
+      assert.equal(game.players[2].filter(c => c?.number === number).length, 0);
+      assert.equal(game.players[2][1].number, '3');
+      assert.equal(messages[0].text, `CPU 1 lays 2 ${number === '2' ? 'twos' : 'tens'}.`);
+    }
+  }
+});
+
+test('holding only mixed specials still saves duplicates if the play would not empty the hand', async () => {
+  const { game, messages } = setup();
+  game.players[2][7] = card('2');
+  game.players[2][8] = { ...card('2'), suit: 2 };
+  game.players[2][9] = card('10');
+  await game.cpuPlay(2, game.generation);
+  assert.equal(messages[0].text, 'CPU 1 lays a two.');
+  assert.equal(game.players[2].filter(c => c?.number === '2').length, 1);
+  assert.equal(game.players[2].filter(c => c?.number === '10').length, 1);
+});
