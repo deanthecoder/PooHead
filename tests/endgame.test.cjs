@@ -559,3 +559,40 @@ test('playing the opening card commits setup and begins CPU turns', async () => 
   assert.equal(game.pile[1].number, '5');
   assert.equal(game.players[1].slice(4, 7).filter(Boolean).length, 3);
 });
+
+test('on an empty pile CPUs play the lowest matching cards and save twos and tens', async () => {
+  for (const row of [4, 7]) {
+    const { game, messages } = setup();
+    game.players[2].fill(null);
+    game.players[2][row] = card('10');
+    game.players[2][row + 1] = card('2');
+    game.players[2][row + 2] = card('3');
+    if (row === 7) game.players[2][10] = { ...card('3'), suit: 2 };
+    await game.cpuPlay(2, game.generation);
+    assert.equal(game.pile[1].number, '3');
+    assert.equal(game.players[2].filter(c => c?.number === '2').length, 1);
+    assert.equal(game.players[2].filter(c => c?.number === '10').length, 1);
+    assert.equal(messages[0].text, row === 7 ? 'CPU 1 lays 2 threes.' : 'CPU 1 lays a three.');
+  }
+});
+
+test('on an empty pile CPUs prefer an ace over a two, and a two over a ten', async () => {
+  for (const [numbers, expected] of [[['10', '2', 'A'], 'A'], [['10', '2'], '2']]) {
+    const { game } = setup();
+    game.players[2].fill(null);
+    numbers.forEach((number, i) => { game.players[2][4 + i] = card(number); });
+    await game.cpuPlay(2, game.generation);
+    assert.equal(game.pile[1].number, expected);
+  }
+});
+
+test('empty-pile face-down choices remain random instead of inspecting hidden ranks', async () => {
+  let draws = 0;
+  const { game, messages } = setup({ Math: Object.assign(Object.create(Math), { random: () => (draws++ % 2) / 2 }) });
+  game.players[2].fill(null);
+  game.players[2][1] = card('10');
+  game.players[2][2] = card('3');
+  await game.cpuPlay(2, game.generation);
+  assert.equal(messages[0].text, 'CPU 1 lays a ten.');
+  assert.equal(game.players[2][2].number, '3');
+});

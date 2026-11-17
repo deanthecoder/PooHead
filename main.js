@@ -426,15 +426,10 @@ class Game {
       cardNo = options[Math.floor(Math.random() * options.length)];
     } else {
       const minimum = hand[7] ? 7 : 4;
-      for (let i = 52; i >= minimum; i--) if (hand[i] && this.higher(hand[i])) cardNo = i;
-    }
-    if (!this.pile[1]) {
-      const old = cardNo;
-      for (let i = 0; i <= 1000; i++) {
-        const choice = 7 + Math.floor(Math.random() * 45);
-        if (hand[choice]) { cardNo = choice; break; }
-      }
-      if (!cardNo) cardNo = old;
+      // Compare ranks explicitly: face-up table cards are not sorted.
+      // Twos and tens rank above ordinary cards, so save them when possible.
+      for (let i = 52; i >= minimum; i--)
+        if (hand[i] && this.higher(hand[i]) && (!cardNo || hand[i].value <= hand[cardNo].value)) cardNo = i;
     }
     if (!cardNo) { cardNo = 52; while (!hand[cardNo]) cardNo--; }
     const chosen = hand[cardNo];
