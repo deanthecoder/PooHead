@@ -134,8 +134,8 @@ class Game {
 
   async fadeBoard(generation) {
     if (!await this.fade(0, 63, generation)) return;
-    this.phase = 'human';
-    status.textContent = 'Your turn';
+    this.phase = 'setup';
+    this.updateSetupStatus();
     this.draw();
   }
 
@@ -153,7 +153,7 @@ class Game {
     this.goFast = false;
     this.leftCard = 7;
     this.modal = null;
-    this.phase = fadeIn ? 'dealing' : 'human';
+    this.phase = fadeIn ? 'dealing' : 'setup';
     this.fadeLevel = fadeIn ? 0 : 63;
 
     const values = [15, 3, 4, 5, 6, 7, 8, 9, 16, 11, 12, 13, 14];
@@ -177,7 +177,7 @@ class Game {
     while (!this.deck[1]) this.scrollUpPack();
     this.sortCards(1);
     if (fadeIn) status.textContent = 'Dealing...';
-    else status.textContent = 'Your turn';
+    else this.updateSetupStatus();
     this.draw();
     if (fadeIn) return this.fadeBoard(this.generation);
   }
@@ -256,14 +256,17 @@ class Game {
     }
     if (this.modal?.kind === 'info') { this.modal = null; this.draw(); return; }
     if (this.modal?.kind === 'message') return;
-    if (this.phase !== 'human' || !this.mouse) return;
+    if (!['setup', 'human'].includes(this.phase) || !this.mouse) return;
     const index = this.cardAt(this.mouse.x, this.mouse.y);
+    if (this.phase === 'setup' && index > 0 && index < 100) {
+      this.setupClick(index, button); return;
+    }
     if (button === 2) {
       if (index >= 4 && index < 100) this.select(index);
       return;
     }
     if (button !== 0) return;
-    if (index === 100) { this.pickup(1); return; }
+    if (index === 100) { if (this.phase === 'human') this.pickup(1); return; }
     if (index === 101 || index === 102) {
       this.leftCard += index === 101 ? -1 : 1;
       this.draw(); return;
@@ -271,6 +274,45 @@ class Game {
     if (index === 103) { this.openInfo(); return; }
     if (index > 0 && index < 100) this.playHuman(index);
   }
+  updateSetupStatus() {
+    const count = this.players[1].slice(4, 7).filter(Boolean).length;
+    status.textContent = count === 3
+      ? 'Arrange your face-up cards, or play from your primary hand to start.'
+      : `Choose ${3 - count} more face-up card${count === 2 ? '' : 's'} from your primary hand.`;
+  }
+
+  setupClick(index, button) {
+    const hand = this.players[1];
+    if (index < 4) return; // Keep the face-down cards hidden and in place.
+    const emptySlot = [4, 5, 6].find(slot => !hand[slot]);
+    if (button === 2) {
+      if (index >= 7 && emptySlot === undefined) this.select(index);
+      return;
+    }
+    if (button !== 0) return;
+    if (index >= 7 && emptySlot === undefined) {
+      this.phase = 'human';
+      status.textContent = 'Your turn';
+      this.playHuman(index);
+      return;
+    }
+    this.clearSelection();
+    if (index < 7) {
+      const slot = hand.findIndex((card, i) => i >= 7 && !card);
+      hand[slot] = hand[index];
+      hand[index] = null;
+      this.sortCards(1);
+    } else {
+      const card = hand[index];
+      this.removeCard(hand, index);
+      hand[emptySlot] = card;
+    }
+    const count = hand.slice(7).filter(Boolean).length;
+    this.leftCard = Math.max(7, Math.min(this.leftCard, 7 + count - 5));
+    this.updateSetupStatus();
+    this.draw();
+  }
+
   select(index) {
     const hand = this.players[1];
     if (index < 7 && hand[7]) return;

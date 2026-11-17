@@ -78,7 +78,7 @@ test('new game during the winning notice cancels the old endgame', async () => {
   game.players[1][1] = card('5');
   game.message = async () => game.newGame();
   await game.playHuman(1);
-  assert.equal(game.phase, 'human');
+  assert.equal(game.phase, 'setup');
   assert.equal(game.goFast, false);
   assert.equal(game.finishOrder.length, 0);
   assert.equal(state.cpuTurns(), 0);
@@ -305,7 +305,7 @@ test('new game cancels box expansion without overwriting the new deal', async ()
   await tick();
   await work;
   assert.equal(game.modal, null);
-  assert.equal(game.phase, 'human');
+  assert.equal(game.phase, 'setup');
   assert.equal(timers.length, 0);
 });
 
@@ -370,7 +370,7 @@ test('startup uses original 64-step fades, intro holds, and fades the first boar
     await tick();
   }
   await work;
-  assert.equal(game.phase, 'human');
+  assert.equal(game.phase, 'setup');
   assert.equal(game.fadeLevel, 63);
   assert.equal(timers.length, 0);
 });
@@ -385,7 +385,7 @@ test('restarting during the intro hold or board fade cancels the previous animat
     await tick();
     await work;
     assert.equal(game.players, players);
-    assert.equal(game.phase, 'human');
+    assert.equal(game.phase, 'setup');
     assert.equal(game.fadeLevel, 63);
     assert.equal(timers.length, 0);
   }
@@ -466,7 +466,7 @@ test('clicking the completed results box restarts, while outside and right click
   assert.equal(game.phase, 'finished');
   game.modal.progress = 1;
   game.click(0);
-  assert.equal(game.phase, 'human');
+  assert.equal(game.phase, 'setup');
   assert.equal(game.finished, false);
   assert.equal(game.modal, null);
   assert.equal(game.players[1].filter(Boolean).length, 9);
@@ -516,7 +516,7 @@ test('primary plays stay quiet and a new deal cancels a secondary-card notice', 
   game.players[1][4] = card('Q');
   game.message = async () => game.newGame();
   await game.playHuman(4);
-  assert.equal(game.phase, 'human');
+  assert.equal(game.phase, 'setup');
   assert.equal(game.players[1].filter(Boolean).length, 9);
   assert.equal(state.cpuTurns(), 1);
 });
@@ -540,7 +540,22 @@ test('a new game during an invalid CPU play notice cancels the pending pickup', 
   game.message = async text => { notices.push(text); game.newGame(); };
   assert.equal(await game.cpuPlay(2, game.generation), false);
   assert.deepEqual(notices, ['CPU 1 cannot go.']);
-  assert.equal(game.phase, 'human');
+  assert.equal(game.phase, 'setup');
   assert.equal(game.players[2].filter(Boolean).length, 9);
   assert.equal(game.pile.filter(Boolean).length, 0);
+});
+
+test('playing the opening card commits setup and begins CPU turns', async () => {
+  const { game } = setup();
+  game.newGame();
+  game.players[1][7] = card('5');
+  let turns = 0;
+  game.cpuTurns = () => { turns++; game.phase = 'cpu'; };
+  game.mouse = { x: 40, y: 140 };
+  game.click(0);
+  await Promise.resolve();
+  assert.equal(game.phase, 'cpu');
+  assert.equal(turns, 1);
+  assert.equal(game.pile[1].number, '5');
+  assert.equal(game.players[1].slice(4, 7).filter(Boolean).length, 3);
 });
