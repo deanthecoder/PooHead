@@ -40,7 +40,7 @@ function setup() {
     clearTimeout(id) { timers.delete(id); },
   });
   const source = fs.readFileSync(path.join(__dirname, '../main.js'), 'utf8')
-    .replace("import { VGA } from './vga.js';", 'class VGA {}')
+    .replace(/^import .*;$/m, 'class VGA {}')
     .split('const game = new Game();')[0];
   vm.runInContext(`${source}\nglobalThis.Game = Game;`, context);
   const game = new context.Game();

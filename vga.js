@@ -81,6 +81,9 @@ export class VGA {
     const font = this.sprites['4X5.FNT'];
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ.!?';
     for (const letter of value.toUpperCase()) {
+      if (letter === ':') {
+        this.pixel(x + 1, y + 1, color); this.pixel(x + 1, y + 3, color);
+      }
       const index = chars.indexOf(letter);
       if (index >= 0) {
         for (let fy = 0; fy < 5; fy++) for (let fx = 0; fx < 5; fx++)
@@ -103,13 +106,13 @@ export class VGA {
       x += 5 * scale;
     }
   }
-  present(brightness = 1) {
+  present(fadeLevel = 63) {
     const out = this.image.data;
     for (let i = 0; i < this.pixels.length; i++) {
       const index = this.pixels[i] * 3, p = i * 4;
-      out[p] = Math.min(255, Math.round(this.palette[index] * 255 / 63 * brightness));
-      out[p + 1] = Math.min(255, Math.round(this.palette[index + 1] * 255 / 63 * brightness));
-      out[p + 2] = Math.min(255, Math.round(this.palette[index + 2] * 255 / 63 * brightness));
+      out[p] = Math.round(this.palette[index] * 255 / 63 * (fadeLevel / 63));
+      out[p + 1] = Math.round(this.palette[index + 1] * 255 / 63 * (fadeLevel / 63));
+      out[p + 2] = Math.round(this.palette[index + 2] * 255 / 63 * (fadeLevel / 63));
       out[p + 3] = 255;
     }
     this.ctx.putImageData(this.image, 0, 0);
