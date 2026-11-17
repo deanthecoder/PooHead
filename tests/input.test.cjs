@@ -166,7 +166,7 @@ test('expanded arrow targets exclude cards and only work when scrolling is possi
 
 test('setup can move all face-up cards down and promote three replacements without playing', () => {
   const { game, canvas, plays } = setup();
-  game.newGame();
+  game.newGame(false, false);
   const originalCards = [...game.players[1]].filter(Boolean);
   const hidden = game.players[1].slice(1, 4);
   const cpuHands = game.players.slice(2).map(hand => [...hand]);

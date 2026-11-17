@@ -16,7 +16,7 @@ function setup(timing = {}) {
   vm.runInContext(`${source}\nglobalThis.Game = Game; globalThis.renderer = vga;`, context);
   const game = new context.Game();
   game.draw = () => {};
-  game.newGame();
+  game.newGame(false, false);
   game.phase = 'human';
   game.players.forEach(hand => hand?.fill(null));
   game.deck.fill(null);
@@ -76,7 +76,7 @@ test('new game during the winning notice cancels the old endgame', async () => {
   const state = setup();
   const { game } = state;
   game.players[1][1] = card('5');
-  game.message = async () => game.newGame();
+  game.message = async () => game.newGame(false, false);
   await game.playHuman(1);
   assert.equal(game.phase, 'setup');
   assert.equal(game.goFast, false);
@@ -96,7 +96,7 @@ test('CPU finishes are ranked and final results remain visible', async () => {
   game.click(2);
   assert.equal(game.phase, 'finished');
   assert.equal(game.modal.kind, 'results');
-  game.newGame();
+  game.newGame(false, false);
   assert.equal(game.finishOrder.length, 0);
 });
 
@@ -301,7 +301,7 @@ test('message boxes expand at fixed height, reveal text at full width, then wait
 test('new game cancels box expansion without overwriting the new deal', async () => {
   const { game, timers, tick } = animationSetup();
   const work = game.message('Old game');
-  game.newGame();
+  game.newGame(false, false);
   await tick();
   await work;
   assert.equal(game.modal, null);
@@ -369,6 +369,8 @@ test('startup uses original 64-step fades, intro holds, and fades the first boar
     assert.equal(game.fadeLevel, i);
     await tick();
   }
+  assert.equal(game.phase, 'dealing');
+  for (let i = 0; i < 9; i++) await tick();
   await work;
   assert.equal(game.phase, 'setup');
   assert.equal(game.fadeLevel, 63);
@@ -380,7 +382,7 @@ test('restarting during the intro hold or board fade cancels the previous animat
     const { game, timers, tick } = fadeSetup();
     const work = stage === 'intro hold' ? game.intro() : game.newGame(true);
     if (stage === 'intro hold') for (let i = 0; i < 64; i++) await tick();
-    game.newGame();
+    game.newGame(false, false);
     const players = game.players;
     await tick();
     await work;
@@ -413,7 +415,7 @@ test('a Jack from either secondary row is rejected on a King using real dealt ca
   for (const index of [1, 2, 3, 4, 5, 6]) {
     const state = setup();
     const { game, messages } = state;
-    game.newGame();
+    game.newGame(false, false);
     const cards = [...game.deck, ...game.players.slice(1).flat()].filter(Boolean);
     const jack = cards.find(card => card.number === 'J');
     const king = cards.find(card => card.number === 'K');
@@ -465,6 +467,7 @@ test('clicking the completed results box restarts, while outside and right click
   game.click(0);
   assert.equal(game.phase, 'finished');
   game.modal.progress = 1;
+  game.newGame = () => Object.getPrototypeOf(game).newGame.call(game, false, false);
   game.click(0);
   assert.equal(game.phase, 'setup');
   assert.equal(game.finished, false);
@@ -514,7 +517,7 @@ test('primary plays stay quiet and a new deal cancels a secondary-card notice', 
   assert.equal(messages.length, 0);
   game.phase = 'human';
   game.players[1][4] = card('Q');
-  game.message = async () => game.newGame();
+  game.message = async () => game.newGame(false, false);
   await game.playHuman(4);
   assert.equal(game.phase, 'setup');
   assert.equal(game.players[1].filter(Boolean).length, 9);
@@ -537,7 +540,7 @@ test('a new game during an invalid CPU play notice cancels the pending pickup', 
   game.players[2][7] = card('J');
   game.pile[1] = card('K');
   const notices = [];
-  game.message = async text => { notices.push(text); game.newGame(); };
+  game.message = async text => { notices.push(text); game.newGame(false, false); };
   assert.equal(await game.cpuPlay(2, game.generation), false);
   assert.deepEqual(notices, ['CPU 1 cannot go.']);
   assert.equal(game.phase, 'setup');
@@ -547,7 +550,7 @@ test('a new game during an invalid CPU play notice cancels the pending pickup', 
 
 test('playing the opening card commits setup and begins CPU turns', async () => {
   const { game } = setup();
-  game.newGame();
+  game.newGame(false, false);
   game.players[1][7] = card('5');
   let turns = 0;
   game.cpuTurns = () => { turns++; game.phase = 'cpu'; };
@@ -674,4 +677,49 @@ test('removing cards only scrolls back as far as needed and never moves the view
   assert.equal(game.leftCard, 9);
   while (game.players[1][7]) game.removeCard(game.players[1], 7);
   assert.equal(game.leftCard, 7);
+});
+
+test('dealing reveals face-down, face-up, then primary cards one at a time before setup', async () => {
+  const { game, renderer, timers, tick } = fadeSetup();
+  renderer.sprites = {};
+  renderer.pixels = new Uint8Array(320 * 200);
+  for (const name of ['tile', 'sprite', 'text', 'fill']) renderer[name] = () => {};
+  game.drawArrow = () => {};
+  const visible = [];
+  game.drawCard = (faceUp, card, x, y) => visible.push({ faceUp, card, x, y });
+  game.draw = () => { visible.length = 0; game.drawBoard(); };
+  const work = game.newGame();
+  const dealt = [...game.players[1]];
+  assert.equal(visible.length, 0);
+  for (let count = 1; count <= 9; count++) {
+    assert.equal(game.phase, 'dealing');
+    game.mouse = { x: 20, y: 40 };
+    game.click(0);
+    assert.equal(game.players[1][4], dealt[4]);
+    assert.equal(timers[0].delay, 140);
+    await tick();
+    assert.equal(visible.length, count);
+    assert.deepEqual(new Set(visible.map(item => item.card)), new Set(dealt.slice(1, count + 1)));
+    assert.equal(visible.filter(item => !item.faceUp).length, Math.min(count, 3));
+  }
+  await work;
+  assert.equal(game.phase, 'setup');
+  assert.equal(game.dealVisible, Infinity);
+});
+
+test('starting another deal cancels the previous card reveal sequence', async () => {
+  const { game, tick, timers } = fadeSetup();
+  const oldDeal = game.newGame();
+  await tick();
+  const newDeal = game.newGame();
+  const players = game.players;
+  await tick(); // The old timer must not reveal cards in the new deal.
+  await oldDeal;
+  assert.equal(game.dealVisible, 0);
+  assert.equal(game.players, players);
+  assert.equal(game.phase, 'dealing');
+  for (let i = 0; i < 9; i++) await tick();
+  await newDeal;
+  assert.equal(game.phase, 'setup');
+  assert.equal(timers.length, 0);
 });

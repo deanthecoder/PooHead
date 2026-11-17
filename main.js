@@ -14,6 +14,7 @@ class Game {
     this.modal = null;
     this.phase = 'loading';
     this.fadeLevel = 63;
+    this.dealVisible = Infinity;
     this.leftCard = 7;
     this.selected = new Set();
   }
@@ -132,14 +133,24 @@ class Game {
     if (generation === this.generation) await this.newGame(true);
   }
 
-  async fadeBoard(generation) {
-    if (!await this.fade(0, 63, generation)) return;
+  async revealDeal(generation, fadeIn, animateDeal) {
+    if (fadeIn && !await this.fade(0, 63, generation)) return;
+    if (animateDeal) {
+      for (let count = 1; count <= 9; count++) {
+        await sleep(140);
+        if (generation !== this.generation) return;
+        this.dealVisible = count;
+        this.draw();
+      }
+    }
+    if (generation !== this.generation) return;
+    this.dealVisible = Infinity;
     this.phase = 'setup';
     this.updateSetupStatus();
     this.draw();
   }
 
-  newGame(fadeIn = false) {
+  newGame(fadeIn = false, animateDeal = true) {
     this.generation++;
     this.players = [null, emptyHand(), emptyHand(), emptyHand()];
     this.deck = emptyHand();
@@ -153,7 +164,8 @@ class Game {
     this.goFast = false;
     this.leftCard = 7;
     this.modal = null;
-    this.phase = fadeIn ? 'dealing' : 'setup';
+    this.phase = fadeIn || animateDeal ? 'dealing' : 'setup';
+    this.dealVisible = animateDeal ? 0 : Infinity;
     this.fadeLevel = fadeIn ? 0 : 63;
 
     const values = [15, 3, 4, 5, 6, 7, 8, 9, 16, 11, 12, 13, 14];
@@ -176,10 +188,10 @@ class Game {
     }
     while (!this.deck[1]) this.scrollUpPack();
     this.sortCards(1);
-    if (fadeIn) status.textContent = 'Dealing...';
+    if (fadeIn || animateDeal) status.textContent = 'Dealing...';
     else this.updateSetupStatus();
     this.draw();
-    if (fadeIn) return this.fadeBoard(this.generation);
+    if (fadeIn || animateDeal) return this.revealDeal(this.generation, fadeIn, animateDeal);
   }
 
   scrollUpPack() { const first = this.deck[1]; for (let i = 1; i < 52; i++) this.deck[i] = this.deck[i + 1]; this.deck[52] = first; }
@@ -583,11 +595,11 @@ class Game {
     vga.fill(0, 0, 2, 2, 172);
     const hand = this.players[1];
     for (let i = this.leftCard; i <= this.leftCard + 4; i++)
-      if (hand[i]) this.drawCard(true, hand[i], 30 + (i - this.leftCard) * 54, 125);
+      if (hand[i] && i <= this.dealVisible) this.drawCard(true, hand[i], 30 + (i - this.leftCard) * 54, 125);
     for (let i = 1; i <= 3; i++) {
       const x = i * 47 - 38;
-      if (hand[i]) this.drawCard(false, hand[i], x, 20);
-      if (hand[i + 3]) this.drawCard(true, hand[i + 3], x, 27);
+      if (hand[i] && i <= this.dealVisible) this.drawCard(false, hand[i], x, 20);
+      if (hand[i + 3] && i + 3 <= this.dealVisible) this.drawCard(true, hand[i + 3], x, 27);
     }
     if (this.pile[1]) {
       if (this.pile[3]) this.drawCard(false, this.pile[1], 250, 27);
