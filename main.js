@@ -198,6 +198,11 @@ class Game {
     if (index < 7) { hand[index] = null; return; }
     for (let i = index; i < 52; i++) hand[i] = hand[i + 1];
     hand[52] = null;
+    if (hand === this.players[1]) this.clampHandScroll();
+  }
+  clampHandScroll() {
+    const count = this.players[1].slice(7).filter(Boolean).length;
+    this.leftCard = Math.max(7, Math.min(this.leftCard, 7 + count - 5));
   }
   pickup(player) {
     if (!this.pile[1]) { if (player === 1) this.message('No cards to pick up!'); return false; }
@@ -307,8 +312,7 @@ class Game {
       this.removeCard(hand, index);
       hand[emptySlot] = card;
     }
-    const count = hand.slice(7).filter(Boolean).length;
-    this.leftCard = Math.max(7, Math.min(this.leftCard, 7 + count - 5));
+    this.clampHandScroll();
     this.updateSetupStatus();
     this.draw();
   }

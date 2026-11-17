@@ -642,3 +642,36 @@ test('holding only mixed specials still saves duplicates if the play would not e
   assert.equal(game.players[2].filter(c => c?.number === '2').length, 1);
   assert.equal(game.players[2].filter(c => c?.number === '10').length, 1);
 });
+
+test('playing a scrolled group brings the remaining three primary cards into view', async () => {
+  const { game } = setup();
+  for (let i = 7; i <= 9; i++) game.players[1][i] = card('3');
+  for (let i = 10; i <= 13; i++) {
+    game.players[1][i] = { ...card('Q'), suit: i - 9 };
+    game.select(i);
+  }
+  game.leftCard = 9;
+  await game.playHuman(10);
+  assert.equal(game.players[1].slice(7).filter(Boolean).length, 3);
+  assert.equal(game.leftCard, 7);
+  assert.equal(game.cardAt(40, 140), 7);
+  assert.equal(game.cardAt(94, 140), 8);
+  assert.equal(game.cardAt(148, 140), 9);
+  assert.equal(game.cardAt(10, 150), 0);
+});
+
+test('removing cards only scrolls back as far as needed and never moves the view for CPU removals', () => {
+  const { game } = setup();
+  for (let i = 7; i <= 16; i++) game.players[1][i] = card('3');
+  game.leftCard = 10;
+  game.removeCard(game.players[1], 16);
+  assert.equal(game.leftCard, 10); // Nine cards still leave a full visible row.
+  game.removeCard(game.players[1], 15);
+  assert.equal(game.leftCard, 10);
+  game.removeCard(game.players[1], 14);
+  assert.equal(game.leftCard, 9); // Seven cards: last five start at slot nine.
+  game.removeCard(game.players[2], 7);
+  assert.equal(game.leftCard, 9);
+  while (game.players[1][7]) game.removeCard(game.players[1], 7);
+  assert.equal(game.leftCard, 7);
+});
