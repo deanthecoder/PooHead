@@ -160,6 +160,7 @@ class Game {
     this.currentPlayer = 1;
     this.playersLeft = 3;
     this.finishOrder = [];
+    this.cardsAtWin = null;
     this.finished = false;
     this.goFast = false;
     this.leftCard = 7;
@@ -393,19 +394,26 @@ class Game {
   }
 
   async reducePlayers(player, generation) {
+    if (this.finishOrder.length === 0) {
+      this.cardsAtWin = this.players.map(hand => hand?.slice(1).filter(Boolean).length ?? 0);
+    }
     this.finishOrder.push(player);
     this.playersLeft--;
     if (this.playersLeft !== 1) return false;
     const loser = [1, 2, 3].find(p => !this.playerFinished(p));
     this.finishOrder.push(loser);
     const name = p => p === 1 ? 'You' : `CPU ${p - 1}`;
+    const cardsLeft = p => {
+      const count = this.cardsAtWin[p];
+      return `${count} card${count === 1 ? '' : 's'} left`;
+    };
     this.finished = true; this.phase = 'finished';
     await this.expandModal({
       kind: 'results',
-      text: `${loser === 1 ? 'You are' : `${name(loser)} is`} the shithead!\n1st: ${name(this.finishOrder[0])}\n2nd: ${name(this.finishOrder[1])}\n3rd: ${name(loser)}`,
+      text: `Winner: ${name(this.finishOrder[0])}\n2nd: ${name(this.finishOrder[1])} (${cardsLeft(this.finishOrder[1])})\nThe Shithead: ${name(loser)} (${cardsLeft(loser)})`,
     }, generation);
     if (generation !== this.generation) return true;
-    status.textContent = 'Game over - click the results or use New game to play again';
+    status.textContent = 'Cards left when the winner finished - click the results or use New game to play again';
     this.draw();
     return true;
   }

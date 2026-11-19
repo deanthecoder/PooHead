@@ -90,7 +90,7 @@ test('CPU finishes are ranked and final results remain visible', async () => {
   await game.cpuPlay(2, game.generation);
   await game.cpuPlay(3, game.generation);
   assert.deepEqual([...game.finishOrder], [2, 3, 1]);
-  assert.equal(game.modal.text, 'You are the shithead!\n1st: CPU 1\n2nd: CPU 2\n3rd: You');
+  assert.equal(game.modal.text, 'Winner: CPU 1\n2nd: CPU 2 (1 card left)\nThe Shithead: You (1 card left)');
   assert.equal(game.phase, 'finished');
   assert.match(status.textContent, /New game/);
   game.click(2);
@@ -98,16 +98,28 @@ test('CPU finishes are ranked and final results remain visible', async () => {
   assert.equal(game.modal.kind, 'results');
   game.newGame(false, false);
   assert.equal(game.finishOrder.length, 0);
+  assert.equal(game.cardsAtWin, null);
 });
 
 test('finishing second names the card and reports second place', async () => {
   const { game, messages } = setup();
   game.players[2].fill(null);
-  await game.reducePlayers(2, game.generation);
   game.players[1][1] = card('10');
+  await game.reducePlayers(2, game.generation);
   await game.playHuman(1);
   assert.ok(messages.some(m => m.text.includes('You finish 2nd!')));
-  assert.equal(game.modal.text, 'CPU 2 is the shithead!\n1st: CPU 1\n2nd: You\n3rd: CPU 2');
+  assert.equal(game.modal.text, 'Winner: CPU 1\n2nd: You (1 card left)\nThe Shithead: CPU 2 (1 card left)');
+});
+
+test('results retain all cards held at the first finish despite later plays and pickups', async () => {
+  const { game } = setup();
+  for (const index of [1, 4, 8]) game.players[2][index] = card('6');
+  game.players[3][1] = card('9');
+  await game.reducePlayers(1, game.generation);
+  game.players[2].fill(null);
+  game.players[3][8] = card('K');
+  await game.reducePlayers(2, game.generation);
+  assert.equal(game.modal.text, 'Winner: You\n2nd: CPU 1 (4 cards left)\nThe Shithead: CPU 2 (2 cards left)');
 });
 
 test('right clicking empty board space has no quit action', () => {
@@ -456,7 +468,7 @@ test('clicking the completed results box restarts, while outside and right click
   const { game } = setup();
   game.phase = 'finished';
   game.finished = true;
-  game.modal = { kind: 'results', text: 'CPU 2 is the shithead!\n1st: You\n2nd: CPU 1\n3rd: CPU 2', progress: 1 };
+  game.modal = { kind: 'results', text: 'Winner: You\n2nd: CPU 1 (0 cards left)\nThe Shithead: CPU 2 (12 cards left)', progress: 1 };
   game.mouse = { x: 0, y: 0 };
   game.click(0);
   assert.equal(game.phase, 'finished');
